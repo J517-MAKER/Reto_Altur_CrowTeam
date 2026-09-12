@@ -251,11 +251,12 @@ def extract_pitch_features(y, sr, fast=False):
 
 
 # ── Funcion principal de extraccion ───────────────────────────────────────────
-def extract_features_from_audio(caller, agent, sr, turns=None, fast=True):
+def extract_features_from_audio(caller, agent, sr, turns=None, fast=True, use_wav2vec2=False):
     """Punto de entrada unico para extraccion bicanal (Llamante + Agente).
 
-    fast=True  -> yin + frame 1024 (~10x mas rapido, usado uniformemente en train e inferencia).
-    fast=False -> pyin + frame 2048 (opcional para modo de maxima resolucion).
+    fast=True        -> yin + frame 1024 (~10x mas rapido, usado uniformemente en train e inferencia).
+    fast=False       -> pyin + frame 2048 (opcional para modo de maxima resolucion).
+    use_wav2vec2     -> integra representaciones neuronales de Wav2Vec 2.0 si estan disponibles.
     """
     duration = len(caller) / sr if sr else 0.0
 
@@ -294,6 +295,17 @@ def extract_features_from_audio(caller, agent, sr, turns=None, fast=True):
         agent_turns  = estimate_turns_vad(agent,  sr)
 
     feats.update(compute_turn_features(caller_turns, agent_turns, duration))
+
+    # ── Representaciones profundas Wav2Vec 2.0 (opcional) ─────────────────────
+    if use_wav2vec2:
+        try:
+            from wav2vec2_extractor import get_wav2vec2_extractor, is_wav2vec2_ready
+            if is_wav2vec2_ready():
+                w2v2_ext = get_wav2vec2_extractor()
+                feats.update(w2v2_ext.extract_bichannel_features(caller, agent, sr))
+        except Exception:
+            pass
+
     return feats
 
 

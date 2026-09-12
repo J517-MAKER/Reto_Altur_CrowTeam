@@ -17,7 +17,9 @@ Mejoras v2.0
 
 import base64
 import io
+import json
 import time
+from pathlib import Path
 
 import numpy as np
 import plotly.graph_objects as go
@@ -153,6 +155,16 @@ with st.sidebar:
     except Exception:
         pass
 
+    try:
+        from wav2vec2_extractor import is_wav2vec2_ready
+        st.divider()
+        if is_wav2vec2_ready():
+            st.success("🧠 Wav2Vec 2.0: Listo")
+        else:
+            st.caption("⚡ Motor: Acústico Bicanal (239 feats)")
+    except Exception:
+        pass
+
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.markdown("# 🎙️ Altur Voice Detector")
@@ -258,11 +270,10 @@ with tab1:
 
     if uploaded_files:
         for uploaded in uploaded_files:
-            audio_bytes = uploaded.read()
+            audio_bytes = uploaded.getvalue()
 
             try:
-                import librosa
-                data, sr = sf.read(io.BytesIO(audio_bytes), always_2d=True)
+                data, sr = sf.read(io.BytesIO(audio_bytes), always_2d=True, dtype="float32")
             except Exception as e:
                 st.error(f"{uploaded.name}: No se pudo leer el WAV — {e}")
                 continue
