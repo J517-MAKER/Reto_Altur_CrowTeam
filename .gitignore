@@ -1,0 +1,35 @@
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# Modelo entrenado (archivo pesado, se regenera con train_model.py)
+models/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Datos sensibles / pesados
+# Audios pesados (~1.6 GB) - no se suben a GitHub
+altur-challenge-audio/
+
+# Archivos temporales
+*.tmp
+*.temp
