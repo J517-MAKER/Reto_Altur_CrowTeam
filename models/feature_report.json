@@ -1,0 +1,90 @@
+{
+  "val_roc_auc": 1.0,
+  "val_f1_optimized": 1.0,
+  "optimal_threshold": 0.235,
+  "cv_roc_auc_mean": 1.0,
+  "cv_roc_auc_std": 0.0,
+  "n_features": 239,
+  "top20_features": [
+    {
+      "name": "flatness_std",
+      "importance": 0.0778
+    },
+    {
+      "name": "zcr_std",
+      "importance": 0.0754
+    },
+    {
+      "name": "diff_shimmer_mean",
+      "importance": 0.0405
+    },
+    {
+      "name": "f0_std",
+      "importance": 0.0374
+    },
+    {
+      "name": "response_latency_min",
+      "importance": 0.0368
+    },
+    {
+      "name": "spectral_entropy_std",
+      "importance": 0.0365
+    },
+    {
+      "name": "mfcc_8_mean",
+      "importance": 0.0343
+    },
+    {
+      "name": "shimmer_mean",
+      "importance": 0.0293
+    },
+    {
+      "name": "bandwidth_std",
+      "importance": 0.0285
+    },
+    {
+      "name": "f0_mean",
+      "importance": 0.0246
+    },
+    {
+      "name": "contrast_std",
+      "importance": 0.0241
+    },
+    {
+      "name": "f0_voiced_ratio",
+      "importance": 0.0235
+    },
+    {
+      "name": "diff_f0_mean",
+      "importance": 0.0197
+    },
+    {
+      "name": "f0_p90",
+      "importance": 0.0187
+    },
+    {
+      "name": "diff_rms_mean",
+      "importance": 0.0186
+    },
+    {
+      "name": "f0_range",
+      "importance": 0.0184
+    },
+    {
+      "name": "rolloff_std",
+      "importance": 0.0157
+    },
+    {
+      "name": "ratio_rms_mean",
+      "importance": 0.0152
+    },
+    {
+      "name": "diff_flatness_mean",
+      "importance": 0.0133
+    },
+    {
+      "name": "diff_entropy_mean",
+      "importance": 0.0126
+    }
+  ]
+}

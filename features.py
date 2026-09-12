@@ -251,34 +251,47 @@ def extract_pitch_features(y, sr, fast=False):
 
 
 # ── Funcion principal de extraccion ───────────────────────────────────────────
-def extract_features_from_audio(caller, agent, sr, turns=None, fast=False):
-    """Punto de entrada unico.
+def extract_features_from_audio(caller, agent, sr, turns=None, fast=True):
+    """Punto de entrada unico para extraccion bicanal (Llamante + Agente).
 
-    fast=True  -> inferencia en produccion (yin + frame 1024, ~10x mas rapido).
-    fast=False -> entrenamiento (pyin + frame 2048, mayor calidad).
+    fast=True  -> yin + frame 1024 (~10x mas rapido, usado uniformemente en train e inferencia).
+    fast=False -> pyin + frame 2048 (opcional para modo de maxima resolucion).
     """
     duration = len(caller) / sr if sr else 0.0
 
-    # Extraccion paralela de senal y pitch
-    with ThreadPoolExecutor(max_workers=2) as ex:
-        fut_signal = ex.submit(extract_signal_features, caller, sr, fast)
-        fut_pitch  = ex.submit(extract_pitch_features,  caller, sr, fast)
-        signal_feats = fut_signal.result()
-        pitch_feats  = fut_pitch.result()
+    # Extraccion limpia sin sub-threads para evitar deadlocks de Numba/GIL
+    c_signal = extract_signal_features(caller, sr, fast)
+    c_pitch  = extract_pitch_features(caller, sr, fast)
+    a_signal = extract_signal_features(agent,  sr, fast)
+    a_pitch  = extract_pitch_features(agent,  sr, fast)
 
     feats = {}
-    feats.update(signal_feats)
-    feats.update(pitch_feats)
+    # Canal 0 (Caller)
+    feats.update(c_signal)
+    feats.update(c_pitch)
 
+    # Canal 1 (Agent) con prefijo "agent_"
+    for k, v in a_signal.items():
+        feats[f"agent_{k}"] = v
+    for k, v in a_pitch.items():
+        feats[f"agent_{k}"] = v
+
+    # ── Features diferenciales e interactivos (Caller vs Agent) ──────────────
+    feats["diff_rms_mean"]      = feats.get("rms_mean", 0.0) - feats.get("agent_rms_mean", 0.0)
+    feats["ratio_rms_mean"]     = (feats.get("rms_mean", 0.0) + 1e-6) / (feats.get("agent_rms_mean", 0.0) + 1e-6)
+    feats["diff_f0_mean"]       = feats.get("f0_mean", 0.0) - feats.get("agent_f0_mean", 0.0)
+    feats["diff_entropy_mean"]  = feats.get("spectral_entropy_mean", 0.0) - feats.get("agent_spectral_entropy_mean", 0.0)
+    feats["diff_flatness_mean"] = feats.get("flatness_mean", 0.0) - feats.get("agent_flatness_mean", 0.0)
+    feats["diff_zcr_mean"]      = feats.get("zcr_mean", 0.0) - feats.get("agent_zcr_mean", 0.0)
+    feats["diff_shimmer_mean"]  = feats.get("shimmer_mean", 0.0) - feats.get("agent_shimmer_mean", 0.0)
+    feats["diff_chroma_mean"]   = feats.get("chroma_mean", 0.0) - feats.get("agent_chroma_mean", 0.0)
+
+    # ── Dinamica de turnos ────────────────────────────────────────────────────
     if turns is not None:
         caller_turns, agent_turns = turns
     else:
-        # VAD en paralelo para ambos canales
-        with ThreadPoolExecutor(max_workers=2) as ex:
-            fut_ct = ex.submit(estimate_turns_vad, caller, sr)
-            fut_at = ex.submit(estimate_turns_vad, agent,  sr)
-            caller_turns = fut_ct.result()
-            agent_turns  = fut_at.result()
+        caller_turns = estimate_turns_vad(caller, sr)
+        agent_turns  = estimate_turns_vad(agent,  sr)
 
     feats.update(compute_turn_features(caller_turns, agent_turns, duration))
     return feats
@@ -286,18 +299,18 @@ def extract_features_from_audio(caller, agent, sr, turns=None, fast=False):
 
 # ── Dataset builder ───────────────────────────────────────────────────────────
 def _process_item_tuple(item):
-    anon_id, label, split, audio_dir, turns_dir = item
+    anon_id, label, split, audio_dir, turns_dir, fast, idx, total = item
     wav_path   = Path(audio_dir) / f"{anon_id}.wav"
     turns_path = Path(turns_dir) / f"{anon_id}.json"
 
     if not wav_path.exists():
-        print(f"[WARN] No existe {wav_path}, se omite.")
+        print(f"[WARN] No existe {wav_path}, se omite.", flush=True)
         return None
 
     try:
         caller, agent, sr = load_audio(wav_path)
     except Exception as e:
-        print(f"[WARN] Error leyendo {wav_path}: {e}")
+        print(f"[WARN] Error leyendo {wav_path}: {e}", flush=True)
         return None
 
     turns = None
@@ -305,25 +318,26 @@ def _process_item_tuple(item):
         try:
             turns = load_turns(turns_path)
         except Exception as e:
-            print(f"[WARN] turns invalidos para {anon_id} ({e}); usando VAD.")
+            print(f"[WARN] turns invalidos para {anon_id} ({e}); usando VAD.", flush=True)
 
-    # Entrenamiento: fast=False para pyin (maxima calidad)
-    feats = extract_features_from_audio(caller, agent, sr, turns=turns, fast=False)
+    # Congruencia Train/Inferencia: fast=True por defecto para eliminar distribution shift
+    feats = extract_features_from_audio(caller, agent, sr, turns=turns, fast=fast)
     feats["anon_id"] = anon_id
     feats["label"]   = label
     feats["split"]   = split
-    print(f"[OK] {anon_id} ({label}/{split})")
+    print(f"[{idx+1}/{total}] [OK] {anon_id} ({label}/{split})", flush=True)
     return feats
 
 
-def build_dataset(manifest_path, audio_dir, turns_dir):
+def build_dataset(manifest_path, audio_dir, turns_dir, fast=True):
     manifest = pd.read_csv(manifest_path)
+    total = len(manifest)
     items = [
-        (row["anon_id"], row["label"], row["split"], str(audio_dir), str(turns_dir))
-        for _, row in manifest.iterrows()
+        (row["anon_id"], row["label"], row["split"], str(audio_dir), str(turns_dir), fast, idx, total)
+        for idx, row in manifest.iterrows()
     ]
     rows = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = [executor.submit(_process_item_tuple, item) for item in items]
         for future in as_completed(futures):
             try:
@@ -331,22 +345,27 @@ def build_dataset(manifest_path, audio_dir, turns_dir):
                 if res is not None:
                     rows.append(res)
             except Exception as e:
-                print(f"[ERROR] {e}")
+                print(f"[ERROR] {e}", flush=True)
     return pd.DataFrame(rows)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extrae features del dataset de llamadas.")
+    parser = argparse.ArgumentParser(description="Extrae features bicanal del dataset de llamadas.")
     parser.add_argument("--manifest",  default="data/manifest.csv")
     parser.add_argument("--audio-dir", default="data/audio")
     parser.add_argument("--turns-dir", default="data/turns")
     parser.add_argument("--out",       default="data/features.csv")
+    parser.add_argument("--fast",      action="store_true", default=True,
+                        help="Usa modo rapido con yin para congruencia con inferencia (por defecto: True)")
+    parser.add_argument("--no-fast",   dest="fast", action="store_false",
+                        help="Usa modo completo con pyin (mas lento)")
     args = parser.parse_args()
 
-    df = build_dataset(args.manifest, args.audio_dir, args.turns_dir)
+    print(f"Iniciando extraccion bicanal (fast={args.fast})...")
+    df = build_dataset(args.manifest, args.audio_dir, args.turns_dir, fast=args.fast)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(args.out, index=False)
-    print(f"\nGuardado {args.out} ({len(df)} filas, {df.shape[1]} columnas).")
+    print(f"\nGuardado exitosamente {args.out} ({len(df)} filas, {df.shape[1]} columnas).")
 
 
 if __name__ == "__main__":

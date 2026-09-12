@@ -247,7 +247,7 @@ def make_spectrogram(y: np.ndarray, sr: int, title: str, color: str) -> go.Figur
 
 
 # ── Tabs principales ───────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["📂 Analizar", "📊 Historial", "ℹ️ Acerca de"])
+tab1, tab2, tab3, tab4 = st.tabs(["📂 Analizar", "📊 Historial", "🎯 Subgrupos y Errores", "ℹ️ Acerca de"])
 
 with tab1:
     uploaded_files = st.file_uploader(
@@ -382,27 +382,93 @@ with tab2:
 
 
 with tab3:
+    st.subheader("🎯 Analisis de Desempeno por Subgrupos y Errores")
+    error_rep_path = Path("models/error_analysis.json")
+    feat_rep_path  = Path("models/feature_report.json")
+
+    if error_rep_path.exists():
+        with open(error_rep_path, "r", encoding="utf-8") as f:
+            err_data = json.load(f)
+
+        g = err_data.get("global", {})
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Muestras Evaluadas", g.get("n", 0))
+        c2.metric("F1 Score Global", f"{g.get('f1', 0):.4f}")
+        c3.metric("ROC-AUC Global", f"{g.get('roc_auc', 0):.4f}")
+        c4.metric("Precision Global", f"{g.get('accuracy', 0):.1%}")
+
+        st.markdown("### 📈 Evaluacion por Subgrupos Criticos")
+
+        sub_tabs = st.tabs(["⏱️ Duracion", "🔊 Calidad Acustica / SNR", "🗣️ Densidad de Turnos", "🤐 Proporcion de Silencio"])
+
+        def render_sub_table(sub_dict):
+            import pandas as pd
+            records = [{"Subgrupo": k, "Muestras": v["n"], "F1": v["f1"], "Precision": v["precision"], "Recall": v["recall"], "ROC-AUC": v["roc_auc"]} for k, v in sub_dict.items()]
+            st.dataframe(pd.DataFrame(records), use_container_width=True, hide_index=True)
+
+        with sub_tabs[0]:
+            st.caption("Desempeno comparativo segun duracion de la llamada (<60s, 60-120s, >120s)")
+            render_sub_table(err_data.get("by_duration", {}))
+
+        with sub_tabs[1]:
+            st.caption("Robustez ante ruido acustico y SNR estimado (Bajo, Medio, Alto SNR)")
+            render_sub_table(err_data.get("by_snr", {}))
+
+        with sub_tabs[2]:
+            st.caption("Comportamiento segun alternancia de turnos conversacionales")
+            render_sub_table(err_data.get("by_turns", {}))
+
+        with sub_tabs[3]:
+            st.caption("Rendimiento segun presencia de pausas y silencios en la llamada")
+            render_sub_table(err_data.get("by_silence", {}))
+
+        if feat_rep_path.exists():
+            with open(feat_rep_path, "r", encoding="utf-8") as f:
+                feat_data = json.load(f)
+            top_feats = feat_data.get("top20_features", [])
+            if top_feats:
+                st.markdown("### 🏆 Top Features Mas Discriminantes (Random Forest)")
+                f_names = [x["name"] for x in top_feats[:12]][::-1]
+                f_imps  = [x["importance"] for x in top_feats[:12]][::-1]
+                fig_imp = go.Figure(go.Bar(
+                    x=f_imps,
+                    y=f_names,
+                    orientation="h",
+                    marker=dict(color="#38bdf8"),
+                ))
+                fig_imp.update_layout(
+                    paper_bgcolor="#0f172a",
+                    plot_bgcolor="#0f172a",
+                    font=dict(color="#94a3b8"),
+                    margin=dict(l=150, r=20, t=20, b=20),
+                    height=350,
+                )
+                st.plotly_chart(fig_imp, use_container_width=True, config={"displayModeBar": False})
+    else:
+        st.info("Ejecuta error_analysis.py para generar el reporte de subgrupos.")
+
+
+with tab4:
     st.subheader("Acerca del sistema")
     st.markdown("""
-    **Altur Voice Detector v2.0** — HackMTY 2026
+    **Altur Voice Detector v3.0** — HackMTY 2026
 
-    ### Arquitectura
-    - **Backend**: FastAPI + scikit-learn (VotingClassifier ensemble)
-    - **Frontend**: Streamlit con visualizaciones Plotly interactivas
+    ### Arquitectura Bicanal de Vanguardia
+    - **Backend**: FastAPI + scikit-learn + LightGBM (VotingClassifier ensemble cuádruple: RF + LightGBM + GB + SVC Calibrado)
+    - **Calibración**: Calibración isotónica fina y búsqueda de umbral óptimo en 181 puntos
+    - **Frontend**: Streamlit con diseño dark mode premium y visualizaciones Plotly interactivas
 
-    ### Features del modelo (~110 features)
-    - 🎵 **MFCCs** (20 coeficientes) + **Delta-MFCCs** — textura y dinamica espectral
-    - 📊 **Spectral entropy, chroma, flatness** — distribucion del espectro
-    - 🔊 **Shimmer** — variabilidad de amplitud (TTS es mas estable)
-    - 🎤 **Pitch (F0)**: media, std, jitter, percentiles p10/p50/p90 — naturalidad de voz
-    - ⏱️ **Latencia de respuesta** — bots tienen latencia muy regular
-    - 🤐 **Ratios de silencio y solapamiento** — patrones de conversacion
+    ### Features del Modelo (239 features bicanal)
+    - 🎧 **Canal 0 (Llamante)** y **Canal 1 (Agente)** analizados simétricamente
+    - 🎵 **MFCCs (20)** + **Delta-MFCCs** de ambos canales
+    - 📊 **Spectral entropy, chroma, flatness, spectral contrast**
+    - 🔊 **Shimmer y Jitter** — artificialidad y estabilidad micro-temporal
+    - 🎤 **Pitch (F0)**: percentiles p10, p50, p90, rango F0, media, std y ratio sonoro
+    - ⚖️ **Features diferenciales (Caller vs Agent)**: `diff_shimmer`, `diff_f0`, `diff_rms`, `diff_entropy`, `ratio_rms`
+    - ⏱️ **Métricas conversacionales**: Latencia de respuesta, varianza, silencios y solapamientos
 
-    ### Modos de inferencia
-    | Modo | Algoritmo pitch | Velocidad | Precision |
-    |------|----------------|-----------|-----------|
-    | Rapido (default) | `yin` | ~0.5s | Alta |
-    | Completo | `pyin` | ~3s | Maxima |
+    ### Congruencia Train / Inferencia
+    - Algoritmo de pitch `yin` y longitud de ventana estandarizados uniformemente (`fast=True`), eliminando distribution shifts.
 
     ### Equipo
     **CrowTeam** — HackMTY 2026

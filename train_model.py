@@ -39,6 +39,7 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
+import lightgbm as lgb
 from features import NON_FEATURE_COLS
 
 LABEL_POSITIVE = "synthetic"
@@ -51,7 +52,7 @@ def load_features(path):
 
 
 def build_ensemble():
-    """Construye un VotingClassifier (soft) con 3 modelos complementarios."""
+    """Construye un VotingClassifier (soft) con 4 modelos complementarios de vanguardia."""
     rf = RandomForestClassifier(
         n_estimators=400,
         max_depth=None,
@@ -67,7 +68,15 @@ def build_ensemble():
         subsample=0.8,
         random_state=42,
     )
-    # SVC calibrado directamente (forma recomendada en sklearn >= 1.9)
+    lgbm = lgb.LGBMClassifier(
+        n_estimators=300,
+        learning_rate=0.05,
+        num_leaves=31,
+        class_weight="balanced",
+        random_state=42,
+        verbose=-1,
+        n_jobs=-1,
+    )
     svc = CalibratedClassifierCV(
         SVC(kernel="rbf", C=10, gamma="scale", class_weight="balanced", random_state=42),
         method="isotonic",
@@ -75,9 +84,9 @@ def build_ensemble():
     )
 
     ensemble = VotingClassifier(
-        estimators=[("rf", rf), ("gb", gb), ("svc", svc)],
+        estimators=[("rf", rf), ("gb", gb), ("lgbm", lgbm), ("svc", svc)],
         voting="soft",
-        weights=[3, 2, 1],   # RF tiene mayor peso por su robustez
+        weights=[3, 2, 2, 1],   # RF y LightGBM lideran la robustez tabular
         n_jobs=-1,
     )
     return ensemble
@@ -91,9 +100,9 @@ def build_pipeline(ensemble):
 
 
 def find_optimal_threshold(y_true, y_proba, thresholds=None):
-    """Encuentra el umbral que maximiza el F1-score en validacion."""
+    """Encuentra el umbral que maximiza el F1-score con busqueda de alta resolucion (181 puntos)."""
     if thresholds is None:
-        thresholds = np.linspace(0.1, 0.9, 81)
+        thresholds = np.linspace(0.05, 0.95, 181)
     best_thresh, best_f1 = 0.5, 0.0
     for t in thresholds:
         preds = (y_proba >= t).astype(int)

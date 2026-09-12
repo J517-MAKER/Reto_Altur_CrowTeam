@@ -28,6 +28,7 @@ from typing import List, Optional
 
 import joblib
 import numpy as np
+import pandas as pd
 import soundfile as sf
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -144,9 +145,9 @@ def _run_detect(audio_base64: str, fast: bool) -> dict:
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Error extrayendo features: {e}")
 
-    # Vector de features alineado al modelo
+    # Vector de features alineado al modelo con nombres de columnas
     feature_names = _model_bundle["feature_names"]
-    x = np.array([[feats.get(name, np.nan) for name in feature_names]], dtype=np.float64)
+    x = pd.DataFrame([[feats.get(name, np.nan) for name in feature_names]], columns=feature_names)
 
     pipeline  = _model_bundle["pipeline"]
     threshold = _model_bundle.get("threshold", 0.5)

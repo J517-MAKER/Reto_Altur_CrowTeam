@@ -3,8 +3,9 @@ venv/
 .venv/
 env/
 
-# Modelo entrenado (archivo pesado, se regenera con train_model.py)
-models/
+# Modelo entrenado (archivo binario pesado, se regenera con train_model.py)
+models/*.joblib
+!models/*.json
 
 # Cache de Python
 __pycache__/
@@ -29,6 +30,7 @@ Thumbs.db
 # Datos sensibles / pesados
 # Audios pesados (~1.6 GB) - no se suben a GitHub
 altur-challenge-audio/
+data/audio/
 
 # Archivos temporales
 *.tmp

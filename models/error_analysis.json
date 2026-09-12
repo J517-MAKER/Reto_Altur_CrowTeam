@@ -1,0 +1,168 @@
+{
+  "global": {
+    "n": 353,
+    "n_synthetic": 203,
+    "n_human": 150,
+    "accuracy": 1.0,
+    "f1": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "roc_auc": 1.0
+  },
+  "by_duration": {
+    "Larga (>120s)": {
+      "n": 305,
+      "n_synthetic": 170,
+      "n_human": 135,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "Media (60-120s)": {
+      "n": 48,
+      "n_synthetic": 33,
+      "n_human": 15,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    }
+  },
+  "by_snr": {
+    "Alto SNR (Limpio)": {
+      "n": 118,
+      "n_synthetic": 97,
+      "n_human": 21,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "Bajo SNR (Ruidoso)": {
+      "n": 118,
+      "n_synthetic": 32,
+      "n_human": 86,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "Medio SNR": {
+      "n": 117,
+      "n_synthetic": 74,
+      "n_human": 43,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    }
+  },
+  "by_turns": {
+    "Turnos medios (5-12)": {
+      "n": 113,
+      "n_synthetic": 95,
+      "n_human": 18,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "Muchos turnos (>12)": {
+      "n": 240,
+      "n_synthetic": 108,
+      "n_human": 132,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    }
+  },
+  "by_silence": {
+    "Silencio medio (20-45%)": {
+      "n": 299,
+      "n_synthetic": 181,
+      "n_human": 118,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "Bajo silencio (<20%)": {
+      "n": 42,
+      "n_synthetic": 10,
+      "n_human": 32,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    },
+    "Alto silencio (>45%)": {
+      "n": 12,
+      "n_synthetic": 12,
+      "n_human": 0,
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "roc_auc": 1.0
+    }
+  },
+  "errors": {
+    "false_positives_count": 0,
+    "false_negatives_count": 0,
+    "false_positives": [],
+    "false_negatives": [],
+    "top_uncertain_cases": [
+      {
+        "anon_id": "call_d557fa43925b",
+        "label": "human",
+        "pred_label": "human",
+        "pred_proba": 0.16018586773262203,
+        "uncertainty": 0.07481413226737796,
+        "split": "train"
+      },
+      {
+        "anon_id": "call_95ccefc6e4ce",
+        "label": "human",
+        "pred_label": "human",
+        "pred_proba": 0.14444664345087807,
+        "uncertainty": 0.09055335654912192,
+        "split": "val"
+      },
+      {
+        "anon_id": "call_04d682ac0cef",
+        "label": "human",
+        "pred_label": "human",
+        "pred_proba": 0.14345018857766384,
+        "uncertainty": 0.09154981142233615,
+        "split": "train"
+      },
+      {
+        "anon_id": "call_9a3d5b0a64a3",
+        "label": "human",
+        "pred_label": "human",
+        "pred_proba": 0.14026234772874416,
+        "uncertainty": 0.09473765227125583,
+        "split": "val"
+      },
+      {
+        "anon_id": "call_b382ffa5187d",
+        "label": "human",
+        "pred_label": "human",
+        "pred_proba": 0.13898829102350288,
+        "uncertainty": 0.0960117089764971,
+        "split": "train"
+      }
+    ]
+  }
+}
