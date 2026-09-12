@@ -470,13 +470,13 @@ with tab4:
     - **Frontend**: Streamlit con diseño dark mode premium y visualizaciones Plotly interactivas
 
     ### Features del Modelo (239 features bicanal)
-    - 🎧 **Canal 0 (Llamante)** y **Canal 1 (Agente)** analizados simétricamente
-    - 🎵 **MFCCs (20)** + **Delta-MFCCs** de ambos canales
-    - 📊 **Spectral entropy, chroma, flatness, spectral contrast**
-    - 🔊 **Shimmer y Jitter** — artificialidad y estabilidad micro-temporal
-    - 🎤 **Pitch (F0)**: percentiles p10, p50, p90, rango F0, media, std y ratio sonoro
-    - ⚖️ **Features diferenciales (Caller vs Agent)**: `diff_shimmer`, `diff_f0`, `diff_rms`, `diff_entropy`, `ratio_rms`
-    - ⏱️ **Métricas conversacionales**: Latencia de respuesta, varianza, silencios y solapamientos
+    - **Canal 0 (Llamante)** y **Canal 1 (Agente)** analizados simétricamente
+    - **MFCCs (20)** + **Delta-MFCCs** de ambos canales
+    - **Spectral entropy, chroma, flatness, spectral contrast**
+    - **Shimmer y Jitter** — artificialidad y estabilidad micro-temporal
+    - **Pitch (F0)**: percentiles p10, p50, p90, rango F0, media, std y ratio sonoro
+    - **Features diferenciales (Caller vs Agent)**: `diff_shimmer`, `diff_f0`, `diff_rms`, `diff_entropy`, `ratio_rms`
+    - **Métricas conversacionales**: Latencia de respuesta, varianza, silencios y solapamientos
 
     ### Congruencia Train / Inferencia
     - Algoritmo de pitch `yin` y longitud de ventana estandarizados uniformemente (`fast=True`), eliminando distribution shifts.
