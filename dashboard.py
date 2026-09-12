@@ -259,7 +259,7 @@ def make_spectrogram(y: np.ndarray, sr: int, title: str, color: str) -> go.Figur
 
 
 # ── Tabs principales ───────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs(["📂 Analizar", "📊 Historial", "🎯 Subgrupos y Errores", "ℹ️ Acerca de"])
+tab1, tab2, tab3, tab4 = st.tabs(["Analizar", "Historial", "Subgrupos y Errores", "Acerca de"])
 
 with tab1:
     uploaded_files = st.file_uploader(
@@ -332,12 +332,12 @@ with tab1:
                             st.write("")
                             if is_synth:
                                 st.markdown(
-                                    '<div class="danger-card">🤖 VOZ SINTETICA (IA)</div>',
+                                    '<div class="danger-card"> VOZ SINTETICA (IA)</div>',
                                     unsafe_allow_html=True,
                                 )
                             else:
                                 st.markdown(
-                                    '<div class="success-card">🧑 VOZ HUMANA</div>',
+                                    '<div class="success-card"> VOZ HUMANA</div>',
                                     unsafe_allow_html=True,
                                 )
 
@@ -358,12 +358,12 @@ with tab1:
                         })
 
     else:
-        st.info("⬆️ Sube uno o varios archivos .wav estereo para comenzar.")
+        st.info("Sube uno o varios archivos .wav estereo para comenzar.")
         st.caption("Cada archivo debe tener 2 canales: canal 0 = llamante, canal 1 = agente.")
 
 
 with tab2:
-    st.subheader("📊 Historial de analisis")
+    st.subheader("Historial de analisis")
     if st.session_state.history:
         import pandas as pd
         df_hist = pd.DataFrame(st.session_state.history)
@@ -385,7 +385,7 @@ with tab2:
         col_h2.metric("Sinteticas", synth)
         col_h3.metric("Humanas", total - synth)
 
-        if st.button("🗑️ Limpiar historial"):
+        if st.button("Limpiar historial"):
             st.session_state.history = []
             st.rerun()
     else:
@@ -393,7 +393,7 @@ with tab2:
 
 
 with tab3:
-    st.subheader("🎯 Analisis de Desempeno por Subgrupos y Errores")
+    st.subheader("Analisis de Desempeno por Subgrupos y Errores")
     error_rep_path = Path("models/error_analysis.json")
     feat_rep_path  = Path("models/feature_report.json")
 
@@ -408,9 +408,9 @@ with tab3:
         c3.metric("ROC-AUC Global", f"{g.get('roc_auc', 0):.4f}")
         c4.metric("Precision Global", f"{g.get('accuracy', 0):.1%}")
 
-        st.markdown("### 📈 Evaluacion por Subgrupos Criticos")
+        st.markdown("### Evaluacion por Subgrupos Criticos")
 
-        sub_tabs = st.tabs(["⏱️ Duracion", "🔊 Calidad Acustica / SNR", "🗣️ Densidad de Turnos", "🤐 Proporcion de Silencio"])
+        sub_tabs = st.tabs(["Duracion", "Calidad Acustica / SNR", "Densidad de Turnos", "Proporcion de Silencio"])
 
         def render_sub_table(sub_dict):
             import pandas as pd
@@ -438,7 +438,7 @@ with tab3:
                 feat_data = json.load(f)
             top_feats = feat_data.get("top20_features", [])
             if top_feats:
-                st.markdown("### 🏆 Top Features Mas Discriminantes (Random Forest)")
+                st.markdown("### Top Features Mas Discriminantes (Random Forest)")
                 f_names = [x["name"] for x in top_feats[:12]][::-1]
                 f_imps  = [x["importance"] for x in top_feats[:12]][::-1]
                 fig_imp = go.Figure(go.Bar(
