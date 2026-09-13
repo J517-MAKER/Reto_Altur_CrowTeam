@@ -20,7 +20,6 @@ import streamlit as st
 # ── Configuracion de pagina ────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Altur Voice Detector",
-    page_icon="🎙️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -163,7 +162,7 @@ html, body, [class*="css"] {
     animation: pulse-green 2.5s ease infinite, fadeInUp 0.4s ease both;
     letter-spacing: 0.5px;
 }
-.success-card .result-icon { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.success-card .result-icon { display: flex; justify-content: center; margin-bottom: 0.5rem; }
 .success-card .result-label { font-size: 0.8rem; color: #34d399; letter-spacing: 2px; text-transform: uppercase; }
 
 .danger-card {
@@ -179,7 +178,7 @@ html, body, [class*="css"] {
     animation: pulse-red 2.5s ease infinite, fadeInUp 0.4s ease both;
     letter-spacing: 0.5px;
 }
-.danger-card .result-icon { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+.danger-card .result-icon { display: flex; justify-content: center; margin-bottom: 0.5rem; }
 .danger-card .result-label { font-size: 0.8rem; color: #f87171; letter-spacing: 2px; text-transform: uppercase; }
 
 /* ── Loader animado ── */
@@ -360,7 +359,7 @@ hr { border-color: #1e293b !important; }
 def loader_html(msg: str = "Evaluando audio con modelo entrenado...", sub: str = "Extrayendo 239 features bicanal") -> str:
     return f"""
     <div class="loader-container">
-        <div class="loader-title">🎙️ {msg}</div>
+        <div class="loader-title">{msg}</div>
         <div class="wave-bars">
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
@@ -371,7 +370,7 @@ def loader_html(msg: str = "Evaluando audio con modelo entrenado...", sub: str =
             <div class="wave-bar"></div>
             <div class="wave-bar"></div>
         </div>
-        <div class="loader-sub">⏳ {sub}</div>
+        <div class="loader-sub">{sub}</div>
     </div>
     """
 
@@ -393,7 +392,7 @@ def badge_html(label: str, kind: str = "ok") -> str:
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.image("https://img.icons8.com/nolan/96/microphone.png", width=60)
-    st.markdown("## ⚙️ Configuracion")
+    st.markdown("## Configuración")
     st.divider()
 
     api_url = st.text_input("URL del backend", "http://localhost:8000")
@@ -432,9 +431,9 @@ with st.sidebar:
         from wav2vec2_extractor import is_wav2vec2_ready
         st.divider()
         if is_wav2vec2_ready():
-            st.markdown(badge_html("🧠 Wav2Vec 2.0: Activo", "ok"), unsafe_allow_html=True)
+            st.markdown(badge_html("Wav2Vec 2.0: Activo", "ok"), unsafe_allow_html=True)
         else:
-            st.markdown(badge_html("⚡ Motor: Acústico Bicanal", "warn"), unsafe_allow_html=True)
+            st.markdown(badge_html("Motor: Acústico Bicanal", "warn"), unsafe_allow_html=True)
     except Exception:
         pass
 
@@ -442,7 +441,7 @@ with st.sidebar:
 # ── Header Hero ────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero-header">
-    <div class="hero-title">🎙️ Altur Voice Detector</div>
+    <div class="hero-title">Altur Voice Detector</div>
     <div class="hero-sub">HackMTY 2026 — Clasificación de voz humana vs. sintética en llamadas bancarias</div>
 </div>
 """, unsafe_allow_html=True)
@@ -538,7 +537,7 @@ def make_spectrogram(y: np.ndarray, sr: int, title: str, color: str) -> go.Figur
 
 
 # ── Tabs principales ───────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs(["🎯 Analizar", "📋 Historial", "📊 Subgrupos y Errores", "ℹ️ Acerca de"])
+tab1, tab2, tab3, tab4 = st.tabs(["Analizar", "Historial", "Subgrupos y Errores", "Acerca de"])
 
 with tab1:
     uploaded_files = st.file_uploader(
@@ -565,7 +564,7 @@ with tab1:
             agent  = data[:, 1]
             duration = len(caller) / sr
 
-            with st.expander(f"🎵 {uploaded.name}  ({duration:.1f}s · {sr}Hz)", expanded=True):
+            with st.expander(f"{uploaded.name}  ({duration:.1f}s · {sr}Hz)", expanded=True):
                 # Reproductor de audio
                 st.audio(audio_bytes, format="audio/wav")
 
@@ -584,7 +583,7 @@ with tab1:
 
                 # Boton de analisis
                 btn_key = f"analyze_{uploaded.name}"
-                if st.button(f"🔍 Analizar {uploaded.name}", type="primary", key=btn_key):
+                if st.button(f"Analizar {uploaded.name}", type="primary", key=btn_key):
 
                     # ── Pantalla de carga animada ──
                     loader_slot = st.empty()
@@ -631,7 +630,9 @@ with tab1:
                                 st.markdown(
                                     """
                                     <div class="danger-card result-slide">
-                                        <span class="result-icon">🤖</span>
+                                        <span class="result-icon">
+                                            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        </span>
                                         VOZ SINTÉTICA (IA)
                                         <span class="result-label">Alerta — Posible fraude</span>
                                     </div>
@@ -642,7 +643,9 @@ with tab1:
                                 st.markdown(
                                     """
                                     <div class="success-card result-slide">
-                                        <span class="result-icon">✅</span>
+                                        <span class="result-icon">
+                                            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                        </span>
                                         VOZ HUMANA
                                         <span class="result-label">Verificado — Llamante real</span>
                                     </div>
@@ -656,7 +659,7 @@ with tab1:
 
                             if cached:
                                 st.markdown(
-                                    '<div class="cached-pill">⚡ Resultado desde caché</div>',
+                                    '<div class="cached-pill">Resultado desde caché</div>',
                                     unsafe_allow_html=True,
                                 )
 
@@ -681,7 +684,14 @@ with tab1:
             animation: fadeIn 0.8s ease;
             margin-top: 1rem;
         ">
-            <div style="font-size:3.5rem; margin-bottom:1rem;">🎙️</div>
+            <div style="margin-bottom:1.2rem; display:flex; justify-content:center;">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </div>
             <div style="color:#a78bfa; font-size:1.15rem; font-weight:700; margin-bottom:0.4rem;">
                 Sube un archivo WAV estéreo para comenzar
             </div>
@@ -725,7 +735,7 @@ with tab2:
             border: 1px dashed #1e293b; border-radius:16px;
             color:#475569; animation: fadeIn 0.6s ease;
         ">
-            📋 Aún no hay análisis registrados en esta sesión.
+            Aún no hay análisis registrados en esta sesión.
         </div>
         """, unsafe_allow_html=True)
 
@@ -804,7 +814,7 @@ with tab3:
             border: 1px dashed #1e293b; border-radius:16px;
             color:#475569; animation: fadeIn 0.6s ease;
         ">
-            📊 Ejecuta <code>error_analysis.py</code> para generar el reporte de subgrupos.
+            Ejecuta <code>error_analysis.py</code> para generar el reporte de subgrupos.
         </div>
         """, unsafe_allow_html=True)
 
