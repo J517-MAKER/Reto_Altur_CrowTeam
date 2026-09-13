@@ -1,7 +1,13 @@
 """
-main.py  v2.0
+main.py  v2.1
 ==============
 API FastAPI optimizada para el detector de voz sintetica.
+
+Mejoras v2.1
+------------
+* Contrato del juez: acepta call_id, sample_rate y channels en POST /detect
+* call_id logueado para trazabilidad durante la evaluacion en vivo
+* sample_rate del request usado en el log (el WAV es la fuente de verdad)
 
 Mejoras v2.0
 ------------
@@ -15,6 +21,13 @@ Mejoras v2.0
 
 Ejecutar con:
     uvicorn main:app --reload --port 8000
+
+Contrato del juez (POST /detect)
+---------------------------------
+Request:
+    {"call_id": "...", "audio_base64": "<base64 WAV>", "sample_rate": 8000, "channels": 2}
+Response (HTTP 200):
+    {"is_synthetic": true|false, "confidence": 0.0-1.0}
 """
 
 import base64
@@ -92,15 +105,20 @@ def load_model():
 
 # ── Modelos Pydantic ───────────────────────────────────────────────────────────
 class DetectRequest(BaseModel):
-    audio_base64: str = Field(..., description="WAV estereo en base64")
+    # Campos del contrato oficial del juez
+    call_id: Optional[str] = Field(None, description="Identificador de la llamada (enviado por el juez)")
+    audio_base64: str = Field(..., description="WAV estereo en base64 (canal 0=llamante, canal 1=agente)")
+    sample_rate: Optional[int] = Field(None, description="Tasa de muestreo declarada (referencia; la fuente real es el WAV)")
+    channels: Optional[int] = Field(None, description="Numero de canales declarado (referencia; la fuente real es el WAV)")
+    # Campo interno del equipo
     fast: bool = Field(True, description="Modo rapido (yin). False = pyin, mas preciso pero ~10x mas lento")
 
 
 class DetectResponse(BaseModel):
     is_synthetic: bool
     confidence: float
-    processing_ms: float
-    cached: bool = False
+    processing_ms: float = Field(0.0, description="Tiempo de procesamiento en ms (campo interno, ignorado por el juez)")
+    cached: bool = Field(False, description="True si la respuesta vino del cache LRU")
 
 
 class BatchDetectRequest(BaseModel):
@@ -199,7 +217,18 @@ def detect(payload: DetectRequest):
             status_code=503,
             detail="Modelo no cargado. Ejecuta train_model.py y reinicia el servidor.",
         )
+    call_tag = f"[call_id={payload.call_id}] " if payload.call_id else ""
+    logger.info(
+        f"{call_tag}Recibida peticion — "
+        f"sample_rate={payload.sample_rate}, channels={payload.channels}, "
+        f"fast={payload.fast}"
+    )
     result = _run_detect(payload.audio_base64, payload.fast)
+    logger.info(
+        f"{call_tag}is_synthetic={result['is_synthetic']}, "
+        f"confidence={result['confidence']}, "
+        f"processing_ms={result['processing_ms']}"
+    )
     return DetectResponse(**result)
 
 

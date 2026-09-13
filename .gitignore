@@ -31,7 +31,10 @@ Thumbs.db
 # Audios pesados (~1.6 GB) - no se suben a GitHub
 altur-challenge-audio/
 data/audio/
+audio/
+/manifest.csv
 
 # Archivos temporales
 *.tmp
 *.temp
+
